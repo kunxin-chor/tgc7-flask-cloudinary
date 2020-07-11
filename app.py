@@ -11,12 +11,34 @@ MONGO_URI = os.environ.get('MONGO_URI')
 CLOUD_NAME = os.environ.get("CLOUD_NAME")
 UPLOAD_PRESET = os.environ.get("UPLOAD_PRESET")
 
+DB_NAME = "artworks"
+
+client = pymongo.MongoClient(MONGO_URI)
+
 
 @app.route('/')
 def upload():
     return render_template('upload.template.html',
                            cloud_name=CLOUD_NAME,
                            upload_preset=UPLOAD_PRESET)
+
+
+@app.route('/', methods=['POST'])
+def process_upload():
+    title = request.form.get('title')
+    uploaded_file_url = request.form.get('uploaded_file_url')
+    client[DB_NAME].pictures.insert_one({
+        'title': title,
+        'uploaded_file_url': uploaded_file_url
+    })
+
+    return "Image Uploaded"
+
+
+@app.route('/gallery')
+def gallery():
+    pictures = client[DB_NAME].pictures.find()
+    return render_template('gallery.template.html', all_pictures=pictures)
 
 
 # "magic code" -- boilerplate
