@@ -3,6 +3,7 @@ import os
 import pymongo
 from dotenv import load_dotenv
 import cloudinary
+import json
 
 load_dotenv()
 
@@ -11,7 +12,8 @@ app = Flask(__name__)
 MONGO_URI = os.environ.get('MONGO_URI')
 CLOUD_NAME = os.environ.get("CLOUD_NAME")
 UPLOAD_PRESET = os.environ.get("UPLOAD_PRESET")
-API_SECRET = os.environ.get("CLOUD_SECRET")
+API_SECRET = os.environ.get("API_SECRET")
+API_KEY = os.environ.get("API_KEY")
 
 DB_NAME = "artworks"
 
@@ -22,7 +24,8 @@ client = pymongo.MongoClient(MONGO_URI)
 def upload():
     return render_template('upload.template.html',
                            cloud_name=CLOUD_NAME,
-                           upload_preset=UPLOAD_PRESET)
+                           upload_preset=UPLOAD_PRESET,
+                           api_key=API_KEY)
 
 
 @app.route('/', methods=['POST'])
@@ -43,9 +46,11 @@ def gallery():
     return render_template('gallery.template.html', all_pictures=pictures)
 
 
-@app.route('/generate-signature', methods=["POST"])
+@app.route('/generate-signature')
 def generate_signature():
-    signature = cloudinary.utils.api_sign_request(request.json.params_to_sign,
+    params_to_sign = request.args.get('params_to_sign')
+    params_to_sign = json.loads(params_to_sign)
+    signature = cloudinary.utils.api_sign_request(params_to_sign,
                                                   API_SECRET)
     return {
         "signature": signature
